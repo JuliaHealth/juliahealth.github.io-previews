@@ -186,8 +186,8 @@ auth = _gh_try_auth()
 @inline function generate_package_list(orgname::AbstractString,
                                        output_filename::AbstractString;
                                        auth = _gh_try_auth(),
-                                       exclude = String[],
-                                       include = String[])::Nothing
+                                       exclude,
+                                       include)::Nothing
     _gh_julia_packages_to_markdown_file(orgname::AbstractString,
                                         output_filename;
                                         auth = auth,
