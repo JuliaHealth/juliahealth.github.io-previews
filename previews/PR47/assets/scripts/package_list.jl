@@ -151,7 +151,8 @@ end
                                                         include = String[])::String
     packages = _gh_get_public_julia_packages(orgname;
                                              auth = auth,
-                                             exclude = exclude)
+                                             exclude = exclude,
+                                             include = include)
     result = "\n"
     result *= "| Package | Description |\n"
     result *= "| ------- | ----------- |\n"
