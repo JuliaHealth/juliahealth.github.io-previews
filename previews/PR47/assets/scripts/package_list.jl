@@ -84,6 +84,7 @@ end
                                              include)::Bool
     _name::String = convert(String, lowercase(strip(name)))::String
     result = _name in include
+    @info("", name, include, result)
     return result
 end
 
@@ -119,7 +120,9 @@ end
     _exclude::Vector{String} = convert(Vector{String}, strip.(exclude))::Vector{String}
     _include::Vector{String} = convert(Vector{String}, strip.(include))::Vector{String}
     repos = _gh_all_repos(org; auth = auth)
+    @info("", repos)
     filter!(x -> _gh_should_i_include_this_package(x; auth = auth, include = include), repos)
+    @info("", repos)
     base_url = _gh_organization_base_html_url(org)
     name_to_info = Dict{String, Tuple{String, String, String}}()
     for r in repos
