@@ -98,7 +98,11 @@ end
                                                packages_to_exclude,
                                                packages_to_include)::Vector{Tuple{String, String, String}}
     owner = GitHub.owner(orgname; auth = auth)
-    return _gh_get_public_julia_packages(owner; auth = auth)
+    result =  _gh_get_public_julia_packages(owner;
+                                            auth = auth,
+                                            packages_to_exclude = packages_to_exclude,
+                                            packages_to_include = packages_to_include)
+    return result
 end
 
 @inline function _gh_should_i_include_this_package(repo::GitHub.Repo;
@@ -115,8 +119,8 @@ end
 
 @inline function _gh_get_public_julia_packages(org::GitHub.Owner;
                                                auth = GitHub.AnonymousAuth(),
-                                               packages_to_exclude::Vector{String} = String[],
-                                               packages_to_include::Vector{String} = String[])::Vector{Tuple{String, String, String}}
+                                               packages_to_exclude,
+                                               packages_to_include)::Vector{Tuple{String, String, String}}
     _packages_to_exclude::Vector{String} = convert(Vector{String}, strip.(packages_to_exclude))::Vector{String}
     _packages_to_include::Vector{String} = convert(Vector{String}, strip.(packages_to_include))::Vector{String}
     repos = _gh_all_repos(org; auth = auth)
@@ -152,10 +156,7 @@ end
                                              packages_to_exclude = packages_to_exclude,
                                              packages_to_include = packages_to_include)
     result = "\n"
-    println("packages_to_include")
-    println(packages_to_include)
-    println("packages_to_exclude")
-    println(packages_to_exclude)
+    @info("", packages_to_include, packages_to_exclude)
     result *= "| Package | Description |\n"
     result *= "| ------- | ----------- |\n"
     for info in packages
