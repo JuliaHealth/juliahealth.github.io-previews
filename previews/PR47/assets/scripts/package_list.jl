@@ -95,8 +95,8 @@ end
 
 @inline function _gh_get_public_julia_packages(orgname::AbstractString;
                                                auth = GitHub.AnonymousAuth(),
-                                               exclude = String[],
-                                               include = String[])::Vector{Tuple{String, String, String}}
+                                               exclude,
+                                               include)::Vector{Tuple{String, String, String}}
     owner = GitHub.owner(orgname; auth = auth)
     return _gh_get_public_julia_packages(owner; auth = auth)
 end
@@ -147,8 +147,8 @@ end
 
 @inline function _gh_julia_packages_to_markdown_content(orgname::AbstractString;
                                                         auth = GitHub.AnonymousAuth(),
-                                                        exclude = String[],
-                                                        include = String[])::String
+                                                        exclude,
+                                                        include)::String
     packages = _gh_get_public_julia_packages(orgname;
                                              auth = auth,
                                              exclude = exclude,
@@ -168,8 +168,8 @@ end
 @inline function _gh_julia_packages_to_markdown_file(orgname::AbstractString,
                                                      output_filename::AbstractString;
                                                      auth = GitHub.AnonymousAuth(),
-                                                     exclude = String[],
-                                                     include = String[])::Nothing
+                                                     exclude,
+                                                     include)::Nothing
     content = _gh_julia_packages_to_markdown_content(orgname;
                                                      auth = auth,
                                                      exclude = exclude,
