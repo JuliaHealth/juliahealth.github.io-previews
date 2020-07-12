@@ -21,5 +21,5 @@ const packages_to_exclude = String[]
 const packages_to_include = String["juliahealth.github.io"]
 generate_package_list("JuliaHealth",
                       package_list_md_file;
-                      exclude = packages_to_exclude,
-                      include = packages_to_include)
+                      packages_to_exclude = packages_to_exclude,
+                      packages_to_include = packages_to_include)
