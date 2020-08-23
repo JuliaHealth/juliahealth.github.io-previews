@@ -53,11 +53,11 @@ end
 @inline function _gh_description(repo::GitHub.Repo;
                                  auth = GitHub.AnonymousAuth())::String
     description = repo.description
+    name = repo.name
     if description === nothing
-        @error("No description for repo", repo)
+        @error("No description for repo", name, description)
         return ""
     end
-    @info("", description)
     return description
 end
 
@@ -168,6 +168,7 @@ end
     for info in packages
         name, url, description = info
         line = "| [$(name)]($(url)) | $(description) |\n"
+        @info("", line)
         result *= line
     end
     result::String = convert(String, strip(result))::String
