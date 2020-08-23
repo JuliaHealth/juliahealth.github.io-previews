@@ -57,6 +57,7 @@ end
         @error("No description for repo", repo)
         return ""
     end
+    @info("", description)
     return description
 end
 
