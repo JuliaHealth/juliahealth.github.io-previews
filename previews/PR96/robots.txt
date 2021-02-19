@@ -1,4 +1,0 @@
-Sitemap: https://juliahealth.org/juliahealth.github.io-previews/previews/PR96/sitemap.xml
-
-User-agent: *
-Disallow:
