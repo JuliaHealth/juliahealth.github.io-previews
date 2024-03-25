@@ -1,133 +1,96 @@
-<!doctype html> <html lang=en > <meta charset=UTF-8 > <meta name=viewport  content="width=device-width, initial-scale=1"> <link rel=stylesheet  href="/juliahealth.github.io-previews/previews/PR124/libs/highlight/github.min.css"> <link rel=stylesheet  href="/juliahealth.github.io-previews/previews/PR124/css/franklin.css"> <link rel=stylesheet  href="/juliahealth.github.io-previews/previews/PR124/css/basic.css"> <link rel=icon  href="/juliahealth.github.io-previews/previews/PR124/favicon.ico"> <title>JuliaHealth</title> <header> <div class=blog-name ><a href="/juliahealth.github.io-previews/previews/PR124/">JuliaHealth</a></div> <img src="/juliahealth.github.io-previews/previews/PR124/assets/julia-health-logo.png" alt="JuliaHealth logo" title="JuliaHealth logo" style="width: 25%; align:center" /> <nav> <ul> <li><a href="/juliahealth.github.io-previews/previews/PR124/">Home</a> <li><a href="https://github.com/JuliaHealth">GitHub</a> <li><a href="/juliahealth.github.io-previews/previews/PR124/related-organizations">Related Organizations</a> <li><a href="/juliahealth.github.io-previews/previews/PR124/meeting-notes">Meeting Notes</a> <li><a href="/juliahealth.github.io-previews/previews/PR124/JuliaHealth-Blogs">JuliaHealth Blogs</a> </ul> <img src="/juliahealth.github.io-previews/previews/PR124/assets/hamburger.svg" id=menu-icon > </nav> </header> <div class=franklin-content ><h1 id=exploring_patient_pathways_within_juliahealth ><a href="#exploring_patient_pathways_within_juliahealth" class=header-anchor >Exploring Patient Pathways within JuliaHealth</a></h1> <h2>What is Patient Pathways ?</h2> <p>Patient pathways refer to the journey that patients with specific medical conditions undergo in terms of their treatment. This concept goes beyond simple drug uptake statistics and looks at the sequence of treatments patients receive over time, including first-line treatments and subsequent therapies. Understanding patient pathways is essential for analyzing treatment patterns, adherence to clinical guidelines, and the rational use of drugs. To analyze patient pathways, one would typically use real-world data from sources such as electronic health records, claims data, and registries. However, barriers such as data interoperability and resource requirements have hindered the full utilization of real-world data for this purpose.</p> <p>So to address these challenges we wanna introduce to a set of tool to extract and analyze these patient pathways. These set of tool are based on the Observational Medical Outcomes Partnership &#40;OMOP&#41; common data model, which standardizes health care data to promote interoperability.</p> <h2 id=introduction ><a href="#introduction" class=header-anchor >Introduction</a></h2> <p>Here, we are going to have a walkthrough of how to filter out treatment pathways of interest for a given dataset present in CDM format.</p> <h2 id=environment_set-up_and_packages ><a href="#environment_set-up_and_packages" class=header-anchor >Environment Set-Up and Packages 📝</a></h2> <p>Here are the packages we will need for exploring patient pathways grouped by primary use cases in this exploration:</p> <ul> <li><p>Interfacing with databases</p> <ul> <li><p><a href="https://github.com/JuliaDatabases/DBInterface.jl"><code>DBInterface.jl</code></a> - Database interface definitions for Julia</p> <li><p><a href="https://github.com/JuliaDatabases/SQLite.jl"><code>SQLite</code></a> - A Julia interface to the SQLite library</p> </ul> <li><p>Health analytics built specifically for working with OMOP CDM databases</p> </ul> <p>* &#91;&#96;OMOPCDMCohortCreator&#96;&#93;&#40;https://github.com/JuliaHealth/OMOPCDMCohortCreator.jl&#41; - Create cohorts from databases utilizing the OMOP CDM</p> <ul> <li><p>General data analytics tools</p> <ul> <li><p><a href="https://github.com/JuliaData/DataFrames.jl"><code>DataFrames.jl</code></a> - In-memory tabular data in Julia</p> </ul> <li><p>Miscellaneous packages</p> <ul> <li><p><a href="https://github.com/JuliaHealth/HealthSampleData.jl"><code>HealthSampleData.jl</code></a> - Sample health data for a variety of health formats and use cases</p> <li><p><a href="https://github.com/MechanicalRabbit/FunSQL.jl"><code>FunSQL</code></a> - Support for generating random numbers</p> <li><p><code>Base</code> - Default libraries built into Julia</p> </ul> </ul> <h2 id=adding_the_required_dependencies ><a href="#adding_the_required_dependencies" class=header-anchor >Adding the required Dependencies</a></h2> <pre><code class="julia hljs">TUTORIAL&gt; add DBInterface
-TUTORIAL&gt; add HealthSampleData
-TUTORIAL&gt; add OMOPCDMCohortCreator
-TUTORIAL&gt; add SQLite
-TUTORIAL&gt; add DataFrames
-TURORIAL&gt; add FunSQL</code></pre> <h2 id=data ><a href="#data" class=header-anchor >Data</a></h2> <p>For this tutorial, we will work with data from &#91;&#96;Eunomia&#96;&#93;&#40;https://github.com/OHDSI/Eunomia&#41; that is stored in a SQLite format. To install the data on your machine, execute the following code block and follow the prompts - you will need a stable internet connection for the download to complete:</p> <pre><code class="julia hljs"><span class=hljs-keyword >import</span> HealthSampleData: Eunomia
-
-eunomia = Eunomia()</code></pre> <h2 id=connecting_to_the_eunomia_database ><a href="#connecting_to_the_eunomia_database" class=header-anchor >Connecting to the Eunomia Database 💾</a></h2> <p>After you have finished your set up in the Julia, we need to establish a connection to the Eunomia SQLite database that we will use for the rest of the tutorial:</p> <pre><code class="julia hljs"><span class=hljs-keyword >import</span> SQLite: DB
-
-conn = DB(eunomia)</code></pre> <p>With Eunomia, the database&#39;s schema is simply called &quot;main&quot;. We will use this to generate database connection details that will inform <code>OMOPCDMCohortCreator</code> about the type of queries we will write &#40;i.e. SQLite&#41; and the name of the database&#39;s schema. For this step, we will use <code>OMOPCDMCohortCreator</code>:</p> <pre><code class="julia hljs"><span class=hljs-keyword >import</span> OMOPCDMCohortCreator as occ
+<!doctype html> <html lang=en > <meta charset=UTF-8 > <meta name=viewport  content="width=device-width, initial-scale=1"> <link rel=stylesheet  href="/juliahealth.github.io-previews/previews/PR124/libs/highlight/github.min.css"> <link rel=stylesheet  href="/juliahealth.github.io-previews/previews/PR124/css/franklin.css"> <link rel=stylesheet  href="/juliahealth.github.io-previews/previews/PR124/css/basic.css"> <link rel=icon  href="/juliahealth.github.io-previews/previews/PR124/favicon.ico"> <title>Patient pathways</title> <header> <div class=blog-name ><a href="/juliahealth.github.io-previews/previews/PR124/">JuliaHealth</a></div> <img src="/juliahealth.github.io-previews/previews/PR124/assets/julia-health-logo.png" alt="JuliaHealth logo" title="JuliaHealth logo" style="width: 25%; align:center" /> <nav> <ul> <li><a href="/juliahealth.github.io-previews/previews/PR124/">Home</a> <li><a href="https://github.com/JuliaHealth">GitHub</a> <li><a href="/juliahealth.github.io-previews/previews/PR124/related-organizations">Related Organizations</a> <li><a href="/juliahealth.github.io-previews/previews/PR124/meeting-notes">Meeting Notes</a> <li><a href="/juliahealth.github.io-previews/previews/PR124/JuliaHealth-Blogs">JuliaHealth Blogs</a> </ul> <img src="/juliahealth.github.io-previews/previews/PR124/assets/hamburger.svg" id=menu-icon > </nav> </header> <div class=franklin-content ><h1>Exploring Patient Pathways within JuliaHealth</h1> <h2 id=what_is_patient_pathways ><a href="#what_is_patient_pathways" class=header-anchor >What is Patient Pathways ?</a></h2> <p>Patient pathways refer to the journey that patients with specific medical conditions undergo in terms of their treatment. This concept goes beyond simple drug uptake statistics and looks at the sequence of treatments patients receive over time, including first-line treatments and subsequent therapies. Understanding patient pathways is essential for analyzing treatment patterns, adherence to clinical guidelines, and the rational use of drugs. To analyze patient pathways, one would typically use real-world data from sources such as electronic health records, claims data, and registries. However, barriers such as data interoperability and resource requirements have hindered the full utilization of real-world data for this purpose.</p> <p>So to address these challenges we wanna introduce to a set of tool to extract and analyze these patient pathways. These set of tool are based on the Observational Medical Outcomes Partnership &#40;OMOP&#41; common data model, which standardizes health care data to promote interoperability.</p> <h2 id=introduction ><a href="#introduction" class=header-anchor >Introduction</a></h2> <p>Here, we are going to have a walkthrough of how to filter out treatment pathways of interest for a given dataset present in CDM format.</p> <h2 id=environment_set-up_and_packages ><a href="#environment_set-up_and_packages" class=header-anchor >Environment Set-Up and Packages 📝</a></h2> <p>Here are the packages we will need for exploring patient pathways grouped by primary use cases in this exploration:</p> <ul> <li><p>Interfacing with databases</p> <ul> <li><p><a href="https://github.com/JuliaDatabases/DBInterface.jl"><code>DBInterface.jl</code></a> - Database interface definitions for Julia</p> <li><p><a href="https://github.com/JuliaDatabases/SQLite.jl"><code>SQLite</code></a> - A Julia interface to the SQLite library</p> </ul> <li><p>Health analytics built specifically for working with OMOP CDM databases</p> </ul> <p>* &#91;&#96;OMOPCDMCohortCreator&#96;&#93;&#40;https://github.com/JuliaHealth/OMOPCDMCohortCreator.jl&#41; - Create cohorts from databases utilizing the OMOP CDM</p> <ul> <li><p>General data analytics tools</p> <ul> <li><p><a href="https://github.com/JuliaData/DataFrames.jl"><code>DataFrames.jl</code></a> - In-memory tabular data in Julia</p> </ul> <li><p>Miscellaneous packages</p> <ul> <li><p><a href="https://github.com/JuliaHealth/HealthSampleData.jl"><code>HealthSampleData.jl</code></a> - Sample health data for a variety of health formats and use cases</p> <li><p><a href="https://github.com/MechanicalRabbit/FunSQL.jl"><code>FunSQL</code></a> - Support for generating random numbers</p> <li><p><code>Base</code> - Default libraries built into Julia</p> </ul> </ul> <h2 id=adding_the_required_dependencies ><a href="#adding_the_required_dependencies" class=header-anchor >Adding the required Dependencies</a></h2> <pre><code class="julia hljs"><span class=hljs-keyword >using</span> Pkg
+Pkg.add([<span class=hljs-string >&quot;DBInterface&quot;</span>, <span class=hljs-string >&quot;SQLite&quot;</span>, <span class=hljs-string >&quot;DataFrames&quot;</span>, <span class=hljs-string >&quot;FunSQL&quot;</span>, <span class=hljs-string >&quot;HealthSampleData&quot;</span>, <span class=hljs-string >&quot;OMOPCDMCohortCreator&quot;</span>])
+<span class=hljs-keyword >using</span> DBInterface
+<span class=hljs-keyword >using</span> HealthSampleData
+<span class=hljs-keyword >using</span> OMOPCDMCohortCreator
+<span class=hljs-keyword >using</span> SQLite
+<span class=hljs-keyword >using</span> DataFrames
+<span class=hljs-keyword >using</span> FunSQL</code></pre> <h2 id=data ><a href="#data" class=header-anchor >Data</a></h2> <p>For this tutorial, we will work with data from &#91;&#96;Eunomia&#96;&#93;&#40;https://github.com/OHDSI/Eunomia&#41; that is stored in a SQLite format. To install the data on your machine, execute the following code block and follow the prompts - you will need a stable internet connection for the download to complete:</p> <pre><code class="julia hljs"><span class=hljs-keyword >import</span> HealthSampleData: Eunomia
+eunomia = Eunomia()</code></pre> <pre><code class="plaintext hljs">DataDeps.DisabledError(&quot;DataDeps download disabled, as we appear to be in a CI environment, and the environment variable `DATADEPS_ALWAYS_ACCEPT` is not set.\nIf this is indeed running in a headless CI environment, then set the `DATADEPS_ALWAYS_ACCEPT` environment variable to `true` to bypass the accept download prompt (if you do wish to always accept.)\nIf not, then either unset the `CI` environment variable from true, or set `DATADEPS_ALWAYS_ACCEPT` to `false` for the normal prompt behaviour.&quot;)
+</code></pre> <h2 id=connecting_to_the_eunomia_database ><a href="#connecting_to_the_eunomia_database" class=header-anchor >Connecting to the Eunomia Database 💾</a></h2> <p>After you have finished your set up in the Julia, we need to establish a connection to the Eunomia SQLite database that we will use for the rest of the tutorial:</p> <pre><code class="julia hljs"><span class=hljs-keyword >import</span> SQLite: DB
+conn = DB(eunomia)</code></pre> <pre><code class="plaintext hljs">UndefVarError: `eunomia` not defined
+</code></pre> <p>With Eunomia, the database&#39;s schema is simply called &quot;main&quot;. We will use this to generate database connection details that will inform <code>OMOPCDMCohortCreator</code> about the type of queries we will write &#40;i.e. SQLite&#41; and the name of the database&#39;s schema. For this step, we will use <code>OMOPCDMCohortCreator</code>:</p> <pre><code class="julia hljs"><span class=hljs-keyword >import</span> OMOPCDMCohortCreator as occ
 
 occ.GenerateDatabaseDetails(
     :sqlite,
     <span class=hljs-string >&quot;main&quot;</span>
 )</code></pre> <p>Then will generate internal representations of each table found within Eunomia for OMOPCDMCohortCreator to use:</p> <pre><code class="julia hljs">occ.GenerateTables(conn)</code></pre>
+<pre><code class="plaintext hljs">UndefVarError: `conn` not defined
+</code></pre>
 <h2 id=characterizing_patients_who_have_had_strep_throat ><a href="#characterizing_patients_who_have_had_strep_throat" class=header-anchor >Characterizing Patients Who Have Had Strep Throat 🤒</a></h2>
 <p>Now to make things easy for this tutorial we will characterize a group of patients with a certain condition &#40;or conditions&#41; across various attributes like race, age, and combinations thereof. We are going to do miniature version of such a study looking at patients with strep throat. For this, we will use the <code>condition_concept_id</code>: 28060 - this will be needed for you to get correct results.</p>
-<pre><code class="julia hljs">strep_patients = occ.ConditionFilterPersonIDs(<span class=hljs-number >28060</span>, conn)</code></pre>
-<p><strong>Now this are some of the required functions that probabily would be directly be useable via <code>occ</code> after the new version of <a href="https://github.com/JuliaHealth/OMOPCDMCohortCreator.jl"><code>OMOPCDMCohortCreator</code></a> is released.</strong></p>
-<ul>
-<li><p>Function to query the drug&#39;s start date for a given drug.</p>
-
-</ul>
-<pre><code class="julia hljs"><span class=hljs-keyword >function</span> GetDrugExposureStartDate(
-    drug_exposure_ids;
-    tab = drug_exposure
-)
-
-    sql =
-        From(tab) |&gt;
-        Where(Fun.<span class=hljs-keyword >in</span>(Get.drug_exposure_id, drug_exposure_ids...)) |&gt;
-        Select(Get.drug_exposure_id, Get.drug_exposure_start_date) |&gt;
-        q -&gt; render(q, dialect=dialect)
-
-    <span class=hljs-keyword >return</span> <span class=hljs-built_in >String</span>(sql)
-
-<span class=hljs-keyword >end</span>
-
-<span class=hljs-keyword >function</span> GetDrugExposureStartDate(
-    drug_exposure_ids,
-    conn;
-    tab = drug_exposure 
-)
-
-    df = DBInterface.execute(conn, GetDrugExposureStartDate(drug_exposure_ids; tab=tab)) |&gt; DataFrame
-
-    <span class=hljs-keyword >return</span> df
-<span class=hljs-keyword >end</span></code></pre>
-<ul>
-<li><p>Function to query the drug&#39;s end date for a given drug.</p>
-
-</ul>
-<pre><code class="julia hljs"><span class=hljs-keyword >function</span> GetDrugExposureEndDate(
-    drug_exposure_ids;
-    tab = drug_exposure
-)
-
-    sql =
-        From(tab) |&gt;
-        Where(Fun.<span class=hljs-keyword >in</span>(Get.drug_exposure_id, drug_exposure_ids...)) |&gt;
-        Select(Get.drug_exposure_id, Get.drug_exposure_end_date) |&gt;
-        q -&gt; render(q, dialect=dialect)
-
-    <span class=hljs-keyword >return</span> <span class=hljs-built_in >String</span>(sql)
-
-<span class=hljs-keyword >end</span>
-
-<span class=hljs-keyword >function</span> GetDrugExposureEndDate(
-    drug_exposure_ids,
-    conn;
-    tab = drug_exposure 
-)
-
-    df = DBInterface.execute(conn, GetDrugExposureEndDate(drug_exposure_ids; tab=tab)) |&gt; DataFrame
-
-    <span class=hljs-keyword >return</span> df
-<span class=hljs-keyword >end</span></code></pre>
-<p>#So now that we have the dataset to work with as well as all the functions to work with also ready, we from here can start work form PATHWAYS-STUDY.</p>
+<pre><code class="julia hljs">strep_patients = occ.ConditionFilterPersonIDs(<span class=hljs-number >28060</span>, conn)
+println(first(strep_patients, <span class=hljs-number >10</span>))</code></pre>
+<pre><code class="plaintext hljs">UndefVarError: `conn` not defined
+</code></pre>
+<h2 id=so_now_that_we_have_the_dataset_to_work_with_as_well_as_all_the_functions_to_work_with_also_ready_we_from_here_can_start_work_form_pathways-study ><a href="#so_now_that_we_have_the_dataset_to_work_with_as_well_as_all_the_functions_to_work_with_also_ready_we_from_here_can_start_work_form_pathways-study" class=header-anchor >So now that we have the dataset to work with as well as all the functions to work with also ready, we from here can start work form PATHWAYS-STUDY.</a></h2>
 <ul>
 <li><p>To start with we need to get the <code>drug ids</code> corresponding to each of the patients with strep throat.</p>
 
 </ul>
-<pre><code class="julia hljs">patient_drug_exposures = occ.GetDrugExposureIDs(strep_patients, conn)</code></pre>
+<pre><code class="julia hljs">patient_drug_exposures = occ.GetDrugExposureIDs(strep_patients, conn)
+println(first(patient_drug_exposures, <span class=hljs-number >10</span>))</code></pre>
+<pre><code class="plaintext hljs">UndefVarError: `strep_patients` not defined
+</code></pre>
 <ul>
 <li><p>We would also require <code>drug concepts</code> </p>
 
 </ul>
-<pre><code class="julia hljs">pateints_drug_concept_id = occ.GetDrugConceptIDs(patient_drug_exposures, conn)</code></pre>
+<pre><code class="julia hljs">pateints_drug_concept_id = occ.GetDrugConceptIDs(patient_drug_exposures, conn)
+println(first(pateints_drug_concept_id, <span class=hljs-number >10</span>))</code></pre>
+<pre><code class="plaintext hljs">UndefVarError: `patient_drug_exposures` not defined
+</code></pre>
 <ul>
 <li><p>Now that we have the <code>drug ids</code> corresponding to each patients we now need to get the <code>start date</code> and <code>end date</code> corresponding to each <code>drug ids</code></p>
 
 </ul>
-<pre><code class="julia hljs">exposure_start_date = GetDrugExposureStartDate(patient_drug_exposures.drug_exposure_id, conn)
+<pre><code class="julia hljs">exposure_start_date = occ.GetDrugExposureStartDate(patient_drug_exposures.drug_exposure_id, conn)
+println(first(exposure_start_date, <span class=hljs-number >10</span>))
 
 
-exposure_end_date = GetDrugExposureEndDate(patient_drug_exposures.drug_exposure_id, conn)</code></pre>
+exposure_end_date = occ.GetDrugExposureEndDate(patient_drug_exposures.drug_exposure_id, conn)
+println(first(exposure_end_date, <span class=hljs-number >10</span>))</code></pre>
+<pre><code class="plaintext hljs">UndefVarError: `patient_drug_exposures` not defined
+</code></pre>
 <ul>
 <li><p>A thing to notice here is that the dates here are in <code>unix</code> format, which preety annoying to understand so we need to convert it into <code>data-time</code> format. This can be done as follows</p>
 
 </ul>
 <pre><code class="julia hljs">exposure_start_date.drug_exposure_start_date = exposure_start_date.drug_exposure_start_date .|&gt; unix2datetime
 
-exposure_end_date.drug_exposure_end_date = exposure_end_date.drug_exposure_end_date .|&gt; unix2datetime</code></pre>
+exposure_end_date.drug_exposure_end_date = exposure_end_date.drug_exposure_end_date .|&gt; unix2datetime
+
+println(first(exposure_end_date, <span class=hljs-number >10</span>))</code></pre>
+<pre><code class="plaintext hljs">UndefVarError: `exposure_start_date` not defined
+</code></pre>
 <ul>
 <li><p>Now to make the Dataframe look more appealing we try to combine the dataset like this:</p>
 
 </ul>
 <pre><code class="julia hljs">combined_df = DataFrames.outerjoin(patient_drug_exposures, exposure_start_date, on = :drug_exposure_id)
 combined_df = DataFrames.outerjoin(combined_df, exposure_end_date, on = :drug_exposure_id)
-combined_df = DataFrames.outerjoin(combined_df, pateints_drug_concept_id, on = :drug_exposure_id, makeunique=<span class=hljs-literal >true</span>)</code></pre>
+combined_df = DataFrames.outerjoin(combined_df, pateints_drug_concept_id, on = :drug_exposure_id, makeunique=<span class=hljs-literal >true</span>)
+println(first(combined_df, <span class=hljs-number >10</span>))</code></pre>
+<pre><code class="plaintext hljs">UndefVarError: `patient_drug_exposures` not defined
+</code></pre>
 <ul>
 <li><p>Now we need to sort the Dataframe in the ascending order of the dates.</p>
 
 </ul>
-<pre><code class="julia hljs">combined_df =  sort!(combined_df, :drug_exposure_start_date)</code></pre>
+<pre><code class="julia hljs">combined_df =  sort!(combined_df, :drug_exposure_start_date)
+println(first(combined_df, <span class=hljs-number >10</span>))</code></pre>
+<pre><code class="plaintext hljs">UndefVarError: `combined_df` not defined
+</code></pre>
 <ul>
-<li><p>An important thing to notice here is that some start and end dates seems to be preety weird like below:</p>
+<li><p>An important thing to notice here is that some start and end dates seems to be preety weird. We need to make sure that the start date is less than the end date.</p>
+
+<li><p>So in-order to address this issue within the dataset, we will chop off such rows for our pathways study by doing something like this:</p>
 
 </ul>
-<pre><code class="julia hljs">Row │ person_id  drug_exposure_id  drug_exposure_start_date  drug_exposure_end_date    drug_concept_id  person_id_1 
-        │ <span class=hljs-built_in >Float64</span>?   <span class=hljs-built_in >Float64</span>?          <span class=hljs-built_in >Union</span>{<span class=hljs-built_in >Missing</span>, DateTime}  <span class=hljs-built_in >Union</span>{<span class=hljs-built_in >Missing</span>, DateTime}  <span class=hljs-built_in >Float64</span>?         <span class=hljs-built_in >Float64</span>?    
- <span class=hljs-number >109154</span> │     <span class=hljs-number >484.0</span>           <span class=hljs-number >22308.0</span>  <span class=hljs-number >2019</span>-<span class=hljs-number >07</span>-<span class=hljs-number >01</span>T00:<span class=hljs-number >00</span>:<span class=hljs-number >00</span>       <span class=hljs-number >1955</span>-<span class=hljs-number >01</span>-<span class=hljs-number >22</span>T00:<span class=hljs-number >00</span>:<span class=hljs-number >00</span>             <span class=hljs-number >1.12708e6</span>       <span class=hljs-number >1834.0</span>
- <span class=hljs-number >109155</span> │     <span class=hljs-number >484.0</span>           <span class=hljs-number >22308.0</span>  <span class=hljs-number >2019</span>-<span class=hljs-number >07</span>-<span class=hljs-number >01</span>T00:<span class=hljs-number >00</span>:<span class=hljs-number >00</span>       <span class=hljs-number >1955</span>-<span class=hljs-number >01</span>-<span class=hljs-number >22</span>T00:<span class=hljs-number >00</span>:<span class=hljs-number >00</span>             <span class=hljs-number >1.12708e6</span>        <span class=hljs-number >484.0</span>
- <span class=hljs-number >109156</span> │     <span class=hljs-number >484.0</span>           <span class=hljs-number >22308.0</span>  <span class=hljs-number >2019</span>-<span class=hljs-number >07</span>-<span class=hljs-number >01</span>T00:<span class=hljs-number >00</span>:<span class=hljs-number >00</span>       <span class=hljs-number >1955</span>-<span class=hljs-number >01</span>-<span class=hljs-number >22</span>T00:<span class=hljs-number >00</span>:<span class=hljs-number >00</span>             <span class=hljs-number >4.02132e7</span>       <span class=hljs-number >1834.0</span>
- <span class=hljs-number >109157</span> │     <span class=hljs-number >484.0</span>           <span class=hljs-number >22308.0</span>  <span class=hljs-number >2019</span>-<span class=hljs-number >07</span>-<span class=hljs-number >01</span>T00:<span class=hljs-number >00</span>:<span class=hljs-number >00</span>       <span class=hljs-number >1955</span>-<span class=hljs-number >01</span>-<span class=hljs-number >22</span>T00:<span class=hljs-number >00</span>:<span class=hljs-number >00</span>             <span class=hljs-number >4.02132e7</span>        <span class=hljs-number >484.0</span></code></pre>
-<ul>
-<li><p>So in-order to address this issue within the dataset, we will chop off such rows for our pathways study by doinf something like this:</p>
-
-</ul>
-<pre><code class="julia hljs">combined_df = combined_df[combined_df.drug_exposure_start_date .&lt; combined_df.drug_exposure_end_date, :]</code></pre>
+<pre><code class="julia hljs">combined_df = combined_df[combined_df.drug_exposure_start_date .&lt; combined_df.drug_exposure_end_date, :]
+println(first(combined_df, <span class=hljs-number >10</span>))</code></pre>
+<pre><code class="plaintext hljs">UndefVarError: `combined_df` not defined
+</code></pre>
 <ul>
 <li><p>Now as a final step to exploring pathways, we peform a very naive approach to get the treatment-pathways by:</p>
 
@@ -135,7 +98,7 @@ combined_df = DataFrames.outerjoin(combined_df, pateints_drug_concept_id, on = :
 <ol>
 <li><p>Itterate through each of the <code>patients_id</code></p>
 
-<li><p>Itterate through the combined<em>df and push the drug</em>exposure<em>id to the drug</em>pathways list if the two consecutive start dates are different as well as the two consecutive end dates are different.</p>
+<li><p>Itterate through the combined_df and push the <code>drug_exposure_id</code> to the <code>drug_pathways</code> list if the two consecutive start dates are different as well as the two consecutive end dates are different.</p>
 
 </ol>
 <pre><code class="julia hljs">pathways_dict = <span class=hljs-built_in >Dict</span>()
@@ -150,10 +113,15 @@ combined_df = DataFrames.outerjoin(combined_df, pateints_drug_concept_id, on = :
     <span class=hljs-keyword >end</span>
     pathways_dict[person_id] = pathways
 <span class=hljs-keyword >end</span></code></pre>
+<pre><code class="plaintext hljs">UndefVarError: `combined_df` not defined
+</code></pre>
 <ul>
 <li><p>Now the pathways of our interset are present in the dixtionary <code>pathways_dict</code>that would look like this:</p>
 
 </ul>
+<pre><code class="julia hljs">println(first(pathways_dict, <span class=hljs-number >10</span>))</code></pre>
+<pre><code class="plaintext hljs">Pair{Any, Any}[]
+</code></pre>
 <pre><code class="julia hljs"><span class=hljs-built_in >Dict</span>{<span class=hljs-built_in >Any</span>, <span class=hljs-built_in >Any</span>} with <span class=hljs-number >1677</span> entries:
   <span class=hljs-number >4986.0</span> =&gt; <span class=hljs-built_in >Any</span>[<span class=hljs-number >59989.0</span>, <span class=hljs-number >59989.0</span>, <span class=hljs-number >59977.0</span>, <span class=hljs-number >59977.0</span>, <span class=hljs-number >59969.0</span>, <span class=hljs-number >59976.0</span>, <span class=hljs-number >59976.0</span>, <span class=hljs-number >59986.0</span>, <span class=hljs-number >59973.0</span>, <span class=hljs-number >59975.0</span>, <span class=hljs-number >59968.0</span>, <span class=hljs-number >59984.0</span>, <span class=hljs-number >59985.0</span>, <span class=hljs-number >59982.0</span>, <span class=hljs-number >59983.0</span>, <span class=hljs-number >59988.0</span>, <span class=hljs-number >59970.0</span>]
   <span class=hljs-number >4700.0</span> =&gt; <span class=hljs-built_in >Any</span>[<span class=hljs-number >56635.0</span>, <span class=hljs-number >56632.0</span>, <span class=hljs-number >56632.0</span>, <span class=hljs-number >56633.0</span>, <span class=hljs-number >56639.0</span>, <span class=hljs-number >56638.0</span>, <span class=hljs-number >56637.0</span>]
@@ -164,7 +132,7 @@ combined_df = DataFrames.outerjoin(combined_df, pateints_drug_concept_id, on = :
   <span class=hljs-number >3634.0</span> =&gt; <span class=hljs-built_in >Any</span>[<span class=hljs-number >43874.0</span>, <span class=hljs-number >43875.0</span>, <span class=hljs-number >43872.0</span>, <span class=hljs-number >43871.0</span>, <span class=hljs-number >43878.0</span>]</code></pre>
 <div class=page-foot >
   <div class=copyright >
-    &copy; JuliaHealth contributors. Last updated: February 25, 2024. <a id=github  href="https://github.com/JuliaHealth/juliahealth.github.io/blob/dev/blogs/Treatment-Pathways.md">Edit this page on GitHub</a>. Website built with <a href="https://github.com/tlienart/Franklin.jl">Franklin.jl</a>. Powered by the <a href="https://julialang.org">Julia programming language</a>.
+    &copy; JuliaHealth contributors. Last updated: March 25, 2024. <a id=github  href="https://github.com/JuliaHealth/juliahealth.github.io/blob/dev/blogs/Treatment-Pathways.md">Edit this page on GitHub</a>. Website built with <a href="https://github.com/tlienart/Franklin.jl">Franklin.jl</a>. Powered by the <a href="https://julialang.org">Julia programming language</a>.
   </div>
 </div>
 </div>
